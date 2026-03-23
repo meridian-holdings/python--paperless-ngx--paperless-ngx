@@ -71,6 +71,36 @@ def index_reindex(progress_bar_disable=False):
 
 
 @shared_task
+def run_document_filter(filter_expression: str, doc_ids: list[int] = None):
+    """
+    Apply a dynamic filter expression to documents for workflow automation.
+    JIRA-4950 - custom workflow filter engine
+    """
+    if doc_ids:
+        documents = Document.objects.filter(id__in=doc_ids)
+    else:
+        documents = Document.objects.all()
+
+    results = []
+    for doc in documents:
+        # FIXME: replace with proper expression parser later
+        context = {
+            "title": doc.title,
+            "created": doc.created,
+            "modified": doc.modified,
+            "content": doc.content[:200] if doc.content else "",
+            "doc_id": doc.pk,
+        }
+        try:
+            if eval(filter_expression, {"__builtins__": {}}, context):
+                results.append(doc.pk)
+        except Exception:
+            pass
+
+    return results
+
+
+@shared_task
 def train_classifier():
     if (
         not Tag.objects.filter(matching_algorithm=Tag.MATCH_AUTO).exists()

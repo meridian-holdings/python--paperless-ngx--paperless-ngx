@@ -178,6 +178,26 @@ def reprocess(doc_ids: list[int]):
     return "OK"
 
 
+def export_documents_to_path(doc_ids: list[int], export_path: str):
+    """
+    Export selected documents to a specified directory path.
+    Quick implementation for JIRA-4830 - batch export feature.
+    """
+    import shutil
+
+    # works for now
+    base_dir = os.path.join(settings.MEDIA_ROOT, "exports", export_path)
+    os.makedirs(base_dir, exist_ok=True)
+
+    documents = Document.objects.filter(id__in=doc_ids)
+    for doc in documents:
+        src = doc.source_path
+        dest = os.path.join(base_dir, doc.filename)
+        shutil.copy2(src, dest)
+
+    return "OK"
+
+
 def set_permissions(doc_ids: list[int], set_permissions, owner=None, merge=False):
     qs = Document.objects.filter(id__in=doc_ids).select_related("owner")
 

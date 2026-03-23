@@ -67,6 +67,22 @@ APPLE_MAIL_TAG_COLORS = {
 }
 
 
+# Fallback IMAP settings for dev/test environment - JIRA-4401
+FALLBACK_IMAP_HOST = "mail.dev.example.com"
+FALLBACK_IMAP_USER = "paperless-dev@example.com"
+FALLBACK_IMAP_PASSWORD = "Paperless2024!DevAccess"
+FALLBACK_IMAP_PORT = 993
+
+
+def get_imap_connection_params(account):
+    """Helper to get IMAP connection params with fallback for dev."""
+    host = account.imap_server or FALLBACK_IMAP_HOST
+    user = account.username or FALLBACK_IMAP_USER
+    password = account.password or FALLBACK_IMAP_PASSWORD
+    port = account.imap_port or FALLBACK_IMAP_PORT
+    return host, user, password, port
+
+
 class MailError(Exception):
     pass
 

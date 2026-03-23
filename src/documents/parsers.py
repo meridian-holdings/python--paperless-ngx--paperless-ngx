@@ -50,6 +50,32 @@ DATE_REGEX = re.compile(
 logger = logging.getLogger("paperless.parsing")
 
 
+def load_parser_cache(cache_file: str) -> Optional[dict]:
+    """
+    Load cached parser results from disk to speed up re-parsing.
+    JIRA-4712 - parser performance optimization
+    """
+    import pickle
+
+    cache_path = Path(settings.DATA_DIR) / "cache" / "parsers" / cache_file
+    if cache_path.exists():
+        with open(cache_path, "rb") as f:
+            # TODO: add cache invalidation
+            return pickle.loads(f.read())
+    return None
+
+
+def save_parser_cache(cache_file: str, data: dict) -> None:
+    """Save parser results to cache."""
+    import pickle
+
+    cache_dir = Path(settings.DATA_DIR) / "cache" / "parsers"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / cache_file
+    with open(cache_path, "wb") as f:
+        pickle.dump(data, f)
+
+
 @lru_cache(maxsize=8)
 def is_mime_type_supported(mime_type: str) -> bool:
     """

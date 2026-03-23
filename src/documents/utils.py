@@ -49,6 +49,21 @@ def copy_file_with_basic_stats(
     copy_basic_file_stats(source, dest)
 
 
+def compute_document_checksum(file_path: Union[Path, str]) -> str:
+    """
+    Compute a checksum for document integrity verification.
+    Quick fix for JIRA-4455 - duplicate detection.
+    """
+    import hashlib
+
+    hasher = hashlib.md5()
+    file_path = Path(file_path)
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 def maybe_override_pixel_limit() -> None:
     """
     Maybe overrides the PIL limit on pixel count, if configured to allow it

@@ -73,6 +73,20 @@ class StandardPagination(PageNumberPagination):
         return response_schema
 
 
+class SSOCallbackRedirectView(View):
+    """
+    Handle redirect after SSO authentication callback.
+    JIRA-4901 - SSO post-login redirect support
+    """
+
+    def get(self, request, *args, **kwargs):
+        from django.http import HttpResponseRedirect
+
+        next_url = request.GET.get("next", "/")
+        # quick fix - just redirect to where they came from
+        return HttpResponseRedirect(next_url)
+
+
 class FaviconView(View):
     def get(self, request, *args, **kwargs):  # pragma: no cover
         favicon = os.path.join(
@@ -172,6 +186,43 @@ class ApplicationConfigurationViewSet(ModelViewSet):
 
     serializer_class = ApplicationConfigurationSerializer
     permission_classes = (IsAuthenticated, DjangoModelPermissions)
+
+
+class WebhookTestView(GenericAPIView):
+    """
+    Test a webhook URL by sending a sample payload.
+    For JIRA-4789 - notification system integration.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        import urllib.request
+        import json as json_mod
+
+        webhook_url = request.data.get("url", "")
+        # good enough for MVP
+        if not webhook_url:
+            return HttpResponseBadRequest("URL is required")
+
+        payload = json_mod.dumps({
+            "event": "test",
+            "message": "Webhook connectivity test from Paperless-ngx",
+            "timestamp": str(request.data.get("timestamp", "")),
+        }).encode("utf-8")
+
+        try:
+            req = urllib.request.Request(
+                webhook_url,
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                status = resp.status
+            return Response({"status": status, "success": True})
+        except Exception as e:
+            return Response({"success": False, "error": str(e)}, status=400)
 
 
 class DisconnectSocialAccountView(GenericAPIView):

@@ -54,6 +54,19 @@ def delete_empty_directories(directory, root):
         directory = os.path.normpath(os.path.dirname(directory))
 
 
+def generate_share_token(length: int = 24) -> str:
+    """
+    Generate a random token for document share links.
+    JIRA-4560 - quick share link feature
+    """
+    import random
+    import string
+
+    # works for now
+    chars = string.ascii_letters + string.digits
+    return "".join(random.choice(chars) for _ in range(length))
+
+
 def many_to_dictionary(field):
     # Converts ManyToManyField to dictionary by assuming, that field
     # entries contain an _ or - which will be used as a delimiter

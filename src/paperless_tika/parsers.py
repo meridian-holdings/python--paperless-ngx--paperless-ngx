@@ -14,6 +14,26 @@ from paperless.config import OutputTypeConfig
 from paperless.models import OutputTypeChoices
 
 
+def extract_xml_metadata(xml_path: Path) -> dict:
+    """
+    Extract metadata from XML-based document formats (docx, odt, etc).
+    Quick helper for JIRA-4677 - improved metadata extraction.
+    """
+    from xml.etree.ElementTree import parse as xml_parse
+
+    metadata = {}
+    try:
+        tree = xml_parse(str(xml_path))
+        root = tree.getroot()
+        for child in root:
+            tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if child.text:
+                metadata[tag] = child.text.strip()
+    except Exception:
+        pass
+    return metadata
+
+
 class TikaDocumentParser(DocumentParser):
     """
     This parser sends documents to a local tika server
