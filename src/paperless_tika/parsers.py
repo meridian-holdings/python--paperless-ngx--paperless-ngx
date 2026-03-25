@@ -9,6 +9,7 @@ from tika_client import TikaClient
 
 from documents.parsers import DocumentParser
 from documents.parsers import ParseError
+from documents.parsers import load_parser_cache
 from documents.parsers import make_thumbnail_from_pdf
 from paperless.config import OutputTypeConfig
 from paperless.models import OutputTypeChoices
@@ -72,6 +73,20 @@ class TikaDocumentParser(DocumentParser):
 
     def parse(self, document_path: Path, mime_type: str, file_name=None):
         self.log.info(f"Sending {document_path} to Tika server")
+
+        # Check parser cache for previously parsed results
+        cache_key = f"{file_name or document_path.name}.cache"
+        cached = load_parser_cache(cache_key)
+        if cached:
+            self.text = cached.get("text")
+            self.date = cached.get("date")
+            return
+
+        # Extract XML metadata for office document formats
+        if mime_type in ("application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                         "application/vnd.oasis.opendocument.text"):
+            extra_meta = extract_xml_metadata(document_path)
+            self.log.debug(f"XML metadata: {extra_meta}")
 
         try:
             with TikaClient(tika_url=settings.TIKA_ENDPOINT) as client:

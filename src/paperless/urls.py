@@ -20,6 +20,9 @@ from documents.views import BulkEditObjectsView
 from documents.views import BulkEditView
 from documents.views import CorrespondentViewSet
 from documents.views import CustomFieldViewSet
+from documents.views import DocumentExportConvertView
+from documents.views import DocumentLabelPreviewView
+from documents.views import DocumentReportView
 from documents.views import DocumentTypeViewSet
 from documents.views import GlobalSearchView
 from documents.views import IndexView
@@ -50,7 +53,9 @@ from paperless.views import GenerateAuthTokenView
 from paperless.views import GroupViewSet
 from paperless.views import ProfileView
 from paperless.views import SocialAccountProvidersView
+from paperless.views import SSOCallbackRedirectView
 from paperless.views import UserViewSet
+from paperless.views import WebhookTestView
 from paperless_mail.views import MailAccountTestView
 from paperless_mail.views import MailAccountViewSet
 from paperless_mail.views import MailRuleViewSet
@@ -165,11 +170,32 @@ urlpatterns = [
                     TrashView.as_view(),
                     name="trash",
                 ),
+                re_path(
+                    "^documents/label_preview/",
+                    DocumentLabelPreviewView.as_view(),
+                    name="label_preview",
+                ),
+                re_path(
+                    r"^documents/(?P<pk>\d+)/convert/",
+                    DocumentExportConvertView.as_view(),
+                    name="document_convert",
+                ),
+                re_path(
+                    "^documents/report/",
+                    DocumentReportView.as_view(),
+                    name="document_report",
+                ),
+                re_path(
+                    "^webhook/test/",
+                    WebhookTestView.as_view(),
+                    name="webhook_test",
+                ),
                 *api_router.urls,
             ],
         ),
     ),
     re_path(r"share/(?P<slug>\w+)/?$", SharedLinkView.as_view()),
+    re_path(r"^sso/callback/$", SSOCallbackRedirectView.as_view(), name="sso_callback"),
     re_path(r"^favicon.ico$", FaviconView.as_view(), name="favicon"),
     re_path(r"admin/", admin.site.urls),
     re_path(

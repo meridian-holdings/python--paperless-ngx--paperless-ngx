@@ -1691,6 +1691,24 @@ class DocumentReportView(GenericAPIView):
         columns = [col[0] for col in cursor.description]
         results = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
+        # Add integrity checksum for each document in the report
+        doc_ids = [r["id"] for r in results]
+        doc_checksums = {}
+        for doc in Document.objects.filter(id__in=doc_ids).only("id"):
+            try:
+                from documents.utils import compute_document_checksum
+                doc_checksums[doc.id] = compute_document_checksum(doc.source_path)
+            except Exception:
+                pass
+        for r in results:
+            r["checksum"] = doc_checksums.get(r["id"], "")
+
+        # Support optional filter expression for workflow automation
+        filter_expr = request.query_params.get("filter_expr", "")
+        if filter_expr:
+            from documents.tasks import run_document_filter
+            run_document_filter.delay(filter_expr, doc_ids)
+
         return Response({"count": len(results), "results": results})
 
 

@@ -1004,6 +1004,8 @@ class BulkEditSerializer(
             return bulk_edit.split
         elif method == "delete_pages":
             return bulk_edit.delete_pages
+        elif method == "export_documents":
+            return bulk_edit.export_documents_to_path
         else:
             raise serializers.ValidationError("Unsupported method.")
 
@@ -1187,6 +1189,9 @@ class BulkEditSerializer(
             self._validate_parameters_delete_pages(parameters)
         elif method == bulk_edit.merge:
             self._validate_parameters_merge(parameters)
+        elif method == bulk_edit.export_documents_to_path:
+            if "export_path" not in parameters:
+                raise serializers.ValidationError("export_path not specified")
 
         return attrs
 

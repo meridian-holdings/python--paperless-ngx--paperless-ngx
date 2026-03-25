@@ -790,6 +790,12 @@ class ShareLink(models.Model):
         verbose_name = _("share link")
         verbose_name_plural = _("share links")
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from documents.file_handling import generate_share_token
+            self.slug = generate_share_token()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Share Link for {self.document.title}"
 

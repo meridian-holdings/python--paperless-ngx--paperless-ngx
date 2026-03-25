@@ -512,9 +512,10 @@ class MailAccountHandler(LoggingMixin):
 
         total_processed_files = 0
         try:
+            imap_host, imap_user, imap_password, imap_port = get_imap_connection_params(account)
             with get_mailbox(
-                account.imap_server,
-                account.imap_port,
+                imap_host,
+                imap_port,
                 account.imap_security,
             ) as M:
                 supports_gmail_labels = "X-GM-EXT-1" in M.client.capabilities
